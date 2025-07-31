@@ -1,0 +1,99 @@
+services:
+  traefik:
+    image: "traefik:v3.4"
+    restart: always
+    container_name: "traefik"
+    logging:
+      options:
+        max-size: 50m
+    command:
+      # Global
+      - "--log.level=DEBUG"
+      - "--api.insecure=false"
+      - "--api.dashboard=true"
+
+      # Providers
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+
+      # Entrypoints
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+
+      # Certificates
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.myresolver.acme.email=your@mail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+
+      # Dashboard
+      - "--entrypoints.traefik.address=:8080"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./.htpasswd:/etc/htpasswd"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.example.domain.com`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=myresolver"
+      - "traefik.http.routers.traefik.middlewares=traefik-auth"
+      - "traefik.http.middlewares.traefik-auth.basicauth.usersfile=/etc/htpasswd"
+    networks:
+      - traefik
+      
+  portainer:
+    image: portainer/portainer-ce
+    container_name: "portainer"
+    command: -H unix:///var/run/docker.sock
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`prt.example.domain.com`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls.certresolver=myresolver"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      - "traefik.http.routers.portainer-http.rule=Host(`prt.example.domain.com`)"
+      - "traefik.http.routers.portainer-http.entrypoints=web"
+      - "traefik.http.middlewares.portainer-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.portainer-http.middlewares=portainer-redirect"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "portainer_data:/data"
+    networks:
+      - traefik
+
+  #cert-dumper:
+  #  image: ldez/traefik-certs-dumper:v2.10
+  #  container_name: cert-dumper
+  #  command: >
+  #    file
+  #    --source /letsencrypt/acme.json
+  #    --dest /shared/certs
+  #    --version v3
+  #    --domain-subdir false
+  #    --crt-name fullchain
+  #    --key-name privkey
+  #    --crt-ext .pem
+  #    --key-ext .pem
+  #    --watch
+  #  volumes:
+  #    - letsencrypt:/letsencrypt:ro
+  #    - ../mail/tls:/shared/certs
+  #  depends_on:
+  #    - traefik
+  #  networks:
+  #    - traefik
+
+volumes:
+  letsencrypt:
+  portainer_data:
+
+networks:
+  traefik:
+    external: true
