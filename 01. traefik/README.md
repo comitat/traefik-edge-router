@@ -30,6 +30,7 @@
 
 - В docker-compose.yml
 - В конфигурации маршрутов сервисов 
+
 ##### 3. Создайте файл .htpasswd для доступа к дашборду
 
 Установите htpasswd, если он ещё не установлен:  
@@ -43,7 +44,16 @@ sudo apt update && sudo apt install apache2-utils -y
 ```
 htpasswd -c .htpasswd admin
 ```
-  
+
+##### 4. Запуск Traefik  
+Сначала создаем сеть  
+```  
+docker network create traefik  
+``` 
+После этого запускаем докер компоуз  
+```   
+docker compose up -d  
+```  
 
 ##### Доступ к дашборду Traefik
 После запуска дашборд будет доступен по адресу: 
