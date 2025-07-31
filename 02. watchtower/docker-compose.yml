@@ -1,0 +1,49 @@
+services:
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /root/.docker/config.json:/config.json:ro
+    environment:
+      WATCHTOWER_POLL_INTERVAL: 21600
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_INCLUDE_RESTARTING: "true"
+      WATCHTOWER_ROLLBACK: "true"
+      WATCHTOWER_NOTIFICATIONS: "shoutrrr"
+      WATCHTOWER_NOTIFICATION_LEVEL: "info"
+      WATCHTOWER_NO_STARTUP_MESSAGE: "true"
+      WATCHTOWER_NOTIFICATION_URL: "telegram://HTTP_API_TOKEN@telegram?chats=CHAT_ID"
+      WATCHTOWER_NOTIFICATION_REPORT: "true"
+      WATCHTOWER_NOTIFICATION_TEMPLATE: |
+        {{- if .Report -}}
+          {{- with .Report -}}
+        *🐳 Watchtower Report*
+        *Scanned:* {{len .Scanned}} | *Updated:* {{len .Updated}} | *Failed:* {{len .Failed}}
+        
+        {{- if .Updated}}
+        *🔄 Updated Containers:*
+        {{- range .Updated}}
+        - {{.Name}} ({{.ImageName}})
+          {{.CurrentImageID.ShortID}} → {{.LatestImageID.ShortID}}
+        {{- end}}{{- end}}
+        
+        {{- if .Failed}}
+        *❌ Failed Containers:*
+        {{- range .Failed}}
+        - {{.Name}}: {{.Error}}
+        {{- end}}{{- end}}
+          {{- end -}}
+        {{- else -}}
+        {{range .Entries}}{{.Message}}{{"\n"}}{{end}}
+        {{- end -}}
+      WATCHTOWER_EXCLUDE: "nginx,registry,registryctl,postgres"
+      WATCHTOWER_SKIP_CHECK_REGISTRY: "true"  
+    command: --interval 21600 --notification-report
+    restart: always
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
