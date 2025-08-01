@@ -1,0 +1,81 @@
+services:
+  fluent-bit:
+    image: cr.fluentbit.io/fluent/fluent-bit
+    container_name: fluent-bit
+    restart: always
+    depends_on:
+      - opensearch
+    volumes:
+      - ./conf:/fluent-bit/etc
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    networks:
+      - default
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.19.3 
+    container_name: opensearch-dashboards
+    labels:
+      # Включить Traefik
+      - "traefik.enable=true"
+      # Указать сеть Traefik (если контейнер в нескольких сетях)
+      - "traefik.docker.network=traefik"
+      # Определение сервиса
+      - "traefik.http.services.os-dash.loadbalancer.server.port=5601"
+      - "traefik.http.routers.os-dash.service=os-dash"
+      # HTTP роут + редирект на HTTPS
+      - "traefik.http.routers.os-dash-http.rule=Host(`dashboard.yourdomain.com`)"
+      - "traefik.http.routers.os-dash-http.entrypoints=web"
+      - "traefik.http.middlewares.os-dash-redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.os-dash-redirect-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.os-dash-http.middlewares=os-dash-redirect-https"
+      # HTTPS роут
+      - "traefik.http.routers.os-dash.rule=Host(`dashboard.yourdomain.com`)"
+      - "traefik.http.routers.os-dash.entrypoints=websecure"
+      - "traefik.http.routers.os-dash.tls.certresolver=myresolver"
+      # Включить сжатие
+      - "traefik.http.middlewares.os-dash-compress.compress=true"
+      - "traefik.http.routers.os-dash.middlewares=os-dash-compress"
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch:9200"]'
+    depends_on:
+      - opensearch
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: 50m
+    networks:
+      - default
+      - traefik
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.3
+    container_name: opensearch
+    environment:
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms2048m -Xmx2048m
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=your_secure_password_here
+      - discovery.type=single-node
+      - http.compression=true
+      - http.max_content_length=800mb
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    restart: always
+    networks:
+      - default
+
+volumes:
+  opensearch-data:
+
+networks:
+  default:
+  traefik:
+    external: true
+    name: traefik
