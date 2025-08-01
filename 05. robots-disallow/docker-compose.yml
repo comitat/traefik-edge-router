@@ -1,0 +1,41 @@
+services:
+  robots-disallow:
+    image: wikiwi/robots-disallow
+    container_name: robots-a2a
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+
+      # HTTP → HTTPS
+      - "traefik.http.routers.robots-http.rule=Host(`yourdomain.com`) && PathPrefix(`/robots.txt`) || Host(`your.yourdomain.com`) && PathPrefix(`/robots.txt`) || Host(`other.yourdomain.com`) && PathPrefix(`/robots.txt`)"
+      - "traefik.http.routers.robots-http.entrypoints=web"
+      - "traefik.http.routers.robots-http.middlewares=robots-redirect-https"
+      - "traefik.http.routers.robots-http.priority=100"
+
+      # HTTPS
+      - "traefik.http.routers.robots-https.rule=Host(`yourdomain.com`) && PathPrefix(`/robots.txt`) || Host(`your.yourdomain.com`) && PathPrefix(`/robots.txt`) || Host(`other.yourdomain.com`) && PathPrefix(`/robots.txt`)"
+      - "traefik.http.routers.robots-https.entrypoints=websecure"
+      - "traefik.http.routers.robots-https.tls.certresolver=myresolver"
+      - "traefik.http.routers.robots-https.service=robots-svc"
+      - "traefik.http.routers.robots-https.middlewares=robots-compress"
+      - "traefik.http.routers.robots-https.priority=100"
+
+      # Сервис
+      - "traefik.http.services.robots-svc.loadbalancer.server.port=8080"
+
+      # Middlewares
+      - "traefik.http.middlewares.robots-redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.robots-redirect-https.redirectscheme.permanent=true"
+      - "traefik.http.middlewares.robots-compress.compress=true"
+
+    restart: unless-stopped
+    networks:
+      - traefik
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+
+networks:
+  traefik:
+    external: true
