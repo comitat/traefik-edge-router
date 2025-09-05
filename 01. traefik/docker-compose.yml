@@ -28,6 +28,10 @@ services:
 
       # Dashboard
       - "--entrypoints.traefik.address=:8080"
+
+      # Plugins
+      - "--experimental.plugins.fail2ban.moduleName=github.com/tomMoulard/fail2ban"
+      - "--experimental.plugins.fail2ban.version=v0.8.7"
     ports:
       - "80:80"
       - "443:443"
@@ -36,6 +40,7 @@ services:
       - "letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./.htpasswd:/etc/htpasswd"
+      - "./traefik-plugins:/plugins-storage"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.rule=Host(`traefik.example.domain.com`)"
@@ -62,6 +67,15 @@ services:
       - "traefik.http.routers.portainer-http.entrypoints=web"
       - "traefik.http.middlewares.portainer-redirect.redirectscheme.scheme=https"
       - "traefik.http.routers.portainer-http.middlewares=portainer-redirect"
+      # enabled Fail2Ban plugin 
+      - "traefik.http.routers.portainer.middlewares=portainer-fail2ban"
+      - "traefik.http.middlewares.portainer-fail2ban.plugin.fail2ban.rules.enabled=true"
+      - "traefik.http.middlewares.portainer-fail2ban.plugin.fail2ban.rules.maxretry=3"
+      - "traefik.http.middlewares.portainer-fail2ban.plugin.fail2ban.rules.findtime=5m"
+      - "traefik.http.middlewares.portainer-fail2ban.plugin.fail2ban.rules.bantime=1h"
+      - "traefik.http.middlewares.portainer-fail2ban.plugin.fail2ban.rules.statuscode=400,401,403-499"
+      - "traefik.http.middlewares.portainer-fail2ban.plugin.fail2ban.allowlist.ip=::1,127.0.0.1,192.168.0.0/24"
+      - "traefik.http.middlewares.portainer-fail2ban.plugin.fail2ban.denylist.ip=1.2.3.4"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "portainer_data:/data"
