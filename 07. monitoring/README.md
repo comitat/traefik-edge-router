@@ -12,9 +12,9 @@ docker-compose up -d
 ```  
   
 После запуска:  
-  
 Grafana будет автоматически настроена с источниками данных (Prometheus, Loki).  
 Perses нужно настроить вручную (см. ниже).  
+  
 ---  
 ### Bonus: Perses  
 Perses — это экспериментальный, GitOps-ориентированный аналог Grafana.   

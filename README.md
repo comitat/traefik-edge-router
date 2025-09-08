@@ -8,5 +8,6 @@ This repository contains configurations for various services deployed using Dock
 - [04. Headscale](04.%20headscale/) — Self-hosted Tailscale control server (Open Source).
 - [05. Robots-disallow](05.%20robots-disallow/) — Service for serving `robots.txt` with `Disallow: /`.
 - [06. OpenSearch](06.%20opensearch/) — Search engine alternative to Elasticsearch.
+- [07. Monitoring](07.%20monitoring/) - Complete observability stack with metrics (Prometheus), logs (Loki), and visualization (Grafana).
 
 ---
