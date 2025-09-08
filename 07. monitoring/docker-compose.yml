@@ -1,0 +1,131 @@
+x-logging: &logging
+  logging:
+    driver: local
+    options:
+      max-size: "100m"
+      max-file: "3"
+
+x-restart: &restart
+  restart: always
+
+x-networks: &networks
+  networks:
+    - monitoring
+    - traefik
+
+x-common: &common
+  <<: [*restart, *logging, *networks]
+
+services:
+  loki:
+    image: grafana/loki:3.5.3
+    <<: [*common]
+    container_name: loki
+    volumes:
+      - ./config/loki.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:3.4.5
+    <<: [*common]
+    container_name: promtail
+    volumes:
+      - ./config/promtail.yaml:/etc/promtail/docker-config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/docker-config.yaml
+    depends_on:
+      - loki
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.1
+    <<: [*common]
+    container_name: node-exporter
+    user: root
+    privileged: true
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc|rootfs)1305176'
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    <<: [*common]
+    container_name: prometheus
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      #- ./data/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=14d'
+      - '--web.console.libraries=/etc/prometheus/consoles'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    depends_on:
+      - node-exporter
+
+  grafana:
+    image: grafana/grafana:12.0.4
+    <<: [*common]
+    container_name: grafana
+    volumes: 
+      - ./config/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./data/grafana:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=https://storage.googleapis.com/integration-artifacts/grafana-lokiexplore-app/grafana-lokiexplore-app-latest.zip;grafana-lokiexplore-app
+      - GF_SERVER_DOMAIN=grafana.a2a.bsn.si
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s:%(http_port)s
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+    depends_on:
+      - loki
+      - prometheus
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.a2a.bsn.si`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls.certresolver=myresolver"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      - "traefik.http.routers.grafana-http.rule=Host(`grafana.a2a.bsn.si`)"
+      - "traefik.http.routers.grafana-http.entrypoints=web"
+      - "traefik.http.routers.grafana-http.middlewares=grafana-redirect"
+      - "traefik.http.middlewares.grafana-redirect.redirectscheme.scheme=https"
+
+  #perses:
+  #  image: persesdev/perses:v0.52
+  #  <<: [*common]
+  #  container_name: perses
+  #  environment:
+  #    - PERSER_SERVER_PORT=8080
+  #    - PERSER_DATABASE_TYPE=memory  # Для теста — можно later перейти на PostgreSQL
+  #    - PERSER_FEATURE_ENABLE_DASHBOARD_ALERT_TAB=true
+    # Опционально: монтирование конфига, если нужен кастомный
+    # volumes:
+    #   - ./config/perses.yaml:/etc/perses/perses.yaml
+  #  depends_on:
+  #    - prometheus
+  #    - loki
+  #  labels:
+  #    - "traefik.enable=true"
+  #    - "traefik.docker.network=traefik"
+  #    - "traefik.http.routers.perses.rule=Host(`perses.a2a.bsn.si`)"
+  #    - "traefik.http.routers.perses.entrypoints=websecure"
+  #    - "traefik.http.routers.perses.tls.certresolver=myresolver"
+  #    - "traefik.http.routers.perses.middlewares=perses-auth, noindex-robots"
+  #    - "traefik.http.services.perses.loadbalancer.server.port=8080"
+  #    - "traefik.http.routers.perses-http.rule=Host(`perses.a2a.bsn.si`)"
+  #    - "traefik.http.routers.perses-http.entrypoints=web"
+  #    - "traefik.http.routers.perses-http.middlewares=perses-redirect"
+  #    - "traefik.http.middlewares.perses-redirect.redirectscheme.scheme=https"
+
+networks:
+  monitoring:
+    driver: bridge
+  traefik:
+    external: true
