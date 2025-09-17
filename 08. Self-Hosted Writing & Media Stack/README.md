@@ -42,7 +42,7 @@ Password: picsur
 
 ---
 
-### 3. [IT Tools](https://corentin-b.github.io/it-tools/) — Универсальный веб-инструментарий
+### 3. [IT Tools](https://github.com/CorentinTh/it-tools) — Универсальный веб-инструментарий
 
 - 🔤 Конвертеры: Base64, JSON, YAML, XML, JWT, Regex, QR-коды и многое другое.
 - 🛠 Не требует интернета — всё работает в браузере.
