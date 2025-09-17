@@ -97,31 +97,31 @@ services:
       - "traefik.http.routers.grafana-http.middlewares=grafana-redirect"
       - "traefik.http.middlewares.grafana-redirect.redirectscheme.scheme=https"
 
-  perses:
-    image: persesdev/perses:v0.52
-    <<: [*common]
-    container_name: perses
-    environment:
-      - PERSER_SERVER_PORT=8080
-      - PERSER_DATABASE_TYPE=memory
-      - PERSER_FEATURE_ENABLE_DASHBOARD_ALERT_TAB=true
-   # Опционально: монтирование конфига, если нужен кастомный
-   # volumes:
-   #   - ./config/perses.yaml:/etc/perses/perses.yaml
-    depends_on:
-      - prometheus
-      - loki
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik"
-      - "traefik.http.routers.perses.rule=Host(`perses.yourdomain.com`)"
-      - "traefik.http.routers.perses.entrypoints=websecure"
-      - "traefik.http.routers.perses.tls.certresolver=myresolver"
-      - "traefik.http.services.perses.loadbalancer.server.port=8080"
-      - "traefik.http.routers.perses-http.rule=Host(`perses.yourdomain.com`)"
-      - "traefik.http.routers.perses-http.entrypoints=web"
-      - "traefik.http.routers.perses-http.middlewares=perses-redirect"
-      - "traefik.http.middlewares.perses-redirect.redirectscheme.scheme=https"
+  #perses:
+  #  image: persesdev/perses:v0.52
+  #  <<: [*common]
+  #  container_name: perses
+  #  environment:
+  #    - PERSER_SERVER_PORT=8080
+  #    - PERSER_DATABASE_TYPE=memory  # Для теста — можно later перейти на PostgreSQL
+  #    - PERSER_FEATURE_ENABLE_DASHBOARD_ALERT_TAB=true
+  # # Опционально: монтирование конфига, если нужен кастомный
+  # # volumes:
+  # #   - ./config/perses.yaml:/etc/perses/perses.yaml
+  #  depends_on:
+  #    - prometheus
+  #    - loki
+  #  labels:
+  #    - "traefik.enable=true"
+  #    - "traefik.docker.network=traefik"
+  #    - "traefik.http.routers.perses.rule=Host(`perses.yourdomain.com`)"
+  #    - "traefik.http.routers.perses.entrypoints=websecure"
+  #    - "traefik.http.routers.perses.tls.certresolver=myresolver"
+  #    - "traefik.http.services.perses.loadbalancer.server.port=8080"
+  #    - "traefik.http.routers.perses-http.rule=Host(`perses.yourdomain.com`)"
+  #    - "traefik.http.routers.perses-http.entrypoints=web"
+  #    - "traefik.http.routers.perses-http.middlewares=perses-redirect"
+  #    - "traefik.http.middlewares.perses-redirect.redirectscheme.scheme=https"
 
 networks:
   monitoring:

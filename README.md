@@ -9,5 +9,6 @@ This repository contains configurations for various services deployed using Dock
 - [05. Robots-disallow](05.%20robots-disallow/) — Service for serving `robots.txt` with `Disallow: /`.
 - [06. OpenSearch](06.%20opensearch/) — Search engine alternative to Elasticsearch.
 - [07. Monitoring](07.%20monitoring/) - Complete observability stack with metrics (Prometheus), logs (Loki), and visualization (Grafana).
+- [08. Self-Hosted Writing & Media Stack](08.%20Self-Hosted%20Writing%20&%20Media%20Stack) - Minimalist writing platform (WriteFreely) with integrated image hosting (Picsur) and IT tools  
 
 ---
