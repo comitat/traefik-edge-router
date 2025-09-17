@@ -98,6 +98,29 @@ services:
       - media
       - traefik
 
+  plantuml:
+    image: plantuml/plantuml-server:tomcat
+    container_name: plantuml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.services.plantuml.loadbalancer.server.port=8080"
+      - "traefik.http.routers.plantuml.service=plantuml"
+      - "traefik.http.routers.plantuml-http.rule=Host(`plantuml.domain.com`)"
+      - "traefik.http.routers.plantuml-http.entrypoints=web"
+      - "traefik.http.routers.plantuml.rule=Host(`plantuml.domain.com`)"
+      - "traefik.http.routers.plantuml.entrypoints=websecure"
+      - "traefik.http.routers.plantuml.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.plantuml-redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.plantuml-redirect-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.plantuml-http.middlewares=plantuml-redirect-https"
+      - "traefik.http.middlewares.plantuml-compress.compress=true"
+      - "traefik.http.routers.plantuml.middlewares=plantuml-compress"
+    restart: unless-stopped
+    networks:
+      - default
+      - traefik
+
 networks:
   medis:
   traefik:
