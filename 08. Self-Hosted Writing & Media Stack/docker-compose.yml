@@ -1,0 +1,107 @@
+services:
+  write-freely:
+    image: nephatrine/write-freely:latest
+    container_name: write-freely
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.services.writefreely.loadbalancer.server.port=8080"
+      - "traefik.http.routers.writefreely.service=writefreely"
+      - "traefik.http.routers.writefreely-http.rule=Host(`write.domain.com`)"
+      - "traefik.http.routers.writefreely-http.entrypoints=web"
+      - "traefik.http.routers.writefreely.rule=Host(`write.domain.com`)"
+      - "traefik.http.routers.writefreely.entrypoints=websecure"
+      - "traefik.http.routers.writefreely.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.writefreely-redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.writefreely-redirect-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.writefreely-http.middlewares=writefreely-redirect-https"
+      - "traefik.http.middlewares.writefreely-compress.compress=true"
+      - "traefik.http.routers.writefreely.middlewares=writefreely-compress"
+    environment:
+      TZ: America/New_York
+      PUID: 1000
+      PGID: 1000
+    volumes:
+      - ./write-freely:/mnt/config
+    restart: unless-stopped
+    networks:
+      - media
+      - traefik
+
+  picsur:
+    image: ghcr.io/caramelfur/picsur:latest
+    container_name: picsur
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.services.picsur.loadbalancer.server.port=8080"
+      - "traefik.http.routers.picsur.service=picsur"
+      - "traefik.http.routers.picsur-http.rule=Host(`picsur.domain.com`)"
+      - "traefik.http.routers.picsur-http.entrypoints=web"
+      - "traefik.http.routers.picsur.rule=Host(`picsur.domain.com`)"
+      - "traefik.http.routers.picsur.entrypoints=websecure"
+      - "traefik.http.routers.picsur.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.picsur-redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.picsur-redirect-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.picsur--http.middlewares=picsur-redirect-https"
+      - "traefik.http.middlewares.picsur-compress.compress=true"
+      - "traefik.http.routers.picsur.middlewares=picsur-compress"
+    environment:
+      PICSUR_DB_HOST: picsur_postgres
+      PICSUR_DB_PORT: 5432
+      PICSUR_DB_USER: picsur
+      PICSUR_DB_PASSWORD: picsur
+      PICSUR_DB_NAME: picsur
+      PICSUR_DOMAIN: https://picsur.domain.com
+    volumes:
+      - ./picsur/storage:/picsur/storage
+    depends_on:
+      - picsur_postgres
+    restart: unless-stopped
+    networks:
+      - media
+      - traefik
+
+  picsur_postgres:
+    image: postgres:17-alpine
+    container_name: picsur_postgres
+    environment:
+      POSTGRES_DB: picsur
+      POSTGRES_USER: picsur
+      POSTGRES_PASSWORD: picsur
+    volumes:
+      - picsur-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - media
+
+  it-tools:
+    image: corentinth/it-tools:latest
+    container_name: it-tools
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.services.it-tools.loadbalancer.server.port=80"
+      - "traefik.http.routers.it-tools.service=it-tools"
+      - "traefik.http.routers.it-tools-http.rule=Host(`tools.domain.com`)"
+      - "traefik.http.routers.it-tools-http.entrypoints=web"
+      - "traefik.http.routers.it-tools.rule=Host(`tools.domain.com`)"
+      - "traefik.http.routers.it-tools.entrypoints=websecure"
+      - "traefik.http.routers.it-tools.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.it-tools-redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.it-tools-redirect-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.it-tools-http.middlewares=it-tools-redirect-https"
+      - "traefik.http.middlewares.it-tools-compress.compress=true"
+      - "traefik.http.routers.it-tools.middlewares=it-tools-compress"
+    restart: unless-stopped
+    networks:
+      - media
+      - traefik
+
+networks:
+  medis:
+  traefik:
+    external: true
+
+volumes:
+  picsur-data:
