@@ -10,5 +10,6 @@ This repository contains configurations for various services deployed using Dock
 - [06. OpenSearch](06.%20opensearch/) — Search engine alternative to Elasticsearch.
 - [07. Monitoring](07.%20monitoring/) - Complete observability stack with metrics (Prometheus), logs (Loki), and visualization (Grafana).
 - [08. Self-Hosted Writing & Media Stack](08.%20Self-Hosted%20Writing%20&%20Media%20Stack) - Minimalist writing platform (WriteFreely) with integrated image hosting (Picsur) and IT tools  
+- [09. Kafka-Kraft](09.%20Kafka-Kraft) - Kafka Kraft cluster + UI
 
 ---
