@@ -22,8 +22,8 @@ Forgejo — это легковесная свободная альтернат�
 4. Откройте https://git.your-domain.com в браузере и завершите установку (первый пользователь станет администратором)  
   
 #### Пример создания пользователя  
-Пользователя можно создать через UI интерфейс, зайдя на url адрес указанного домена. 
-Или, к примеру командой для докер контейнера  
+Пользователя можно создать через UI интерфейс, зайдя на url адрес указанного домена.   
+Или, к примеру, командой для докер контейнера  
 ```   
 docker exec -u git forgejo \  
   /usr/local/bin/gitea admin user create \  
@@ -46,7 +46,7 @@ GIT_SSH_COMMAND="ssh -i /path/to/your/private_key -p 2222" \
 3. Для удобства создайте `~/.ssh/config`:  
 ```  
 Host git.your-domain.com  
-  Port 10022  
+  Port 2222  
   User git  
   IdentityFile /path/to/your/private_key  
   IdentitiesOnly yes  
